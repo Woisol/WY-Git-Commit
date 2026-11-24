@@ -1,0 +1,118 @@
+---
+name: wy-git-commit
+description: Create Git commits through the wy-git-commit CLI using the My-Git-Commit convention.
+---
+
+# wy-git-commit
+
+Inspect the actual staged diff and recent repository history first. Use the repository's established commit language; default to Chinese when there are no commits or no clear pattern. Do not stage unrelated changes. Follow the convention below and provide the message fields explicitly; the CLI only formats them and invokes the configured commit command.
+
+## Use the CLI
+
+Install the CLI with `npm install --global @woisol/wy-git-commit` after npm publication, or invoke it with `npx @woisol/wy-git-commit`. For a local checkout, use `pnpm install` and `pnpm build`, then run `node dist/cli.js`. If no CLI is available or it fails, report that; do not fall back to bare Git.
+
+```sh
+wy-git-commit --type feat --type docs --scope cli --title "实现提交命令并补充文档"
+wy-git-commit --type feat --scope api --title "调整用户标识字段" --breaking "客户端必须将 userId 改为 id"
+wy-git-commit --type fix --title "修复提交参数解析" --harness Codex --ai-generated true --ai-review false
+```
+
+`--type` and `--title` are required. Read the user configuration if needed to find custom types. Multiple types can also be comma-separated. Use `--body` for optional explanatory text, and supply migration guidance via `--breaking`. Do not pass `-m` or `--message`. Confirm success from the forwarded exit status.
+
+Only include AI metadata when the change is mostly or wholly AI-generated and not meaningfully reviewed. Identify the actual agent environment with `--harness` when the agent runs the commit. `--ai-generated` and `--ai-review` accept explicit `true` or `false`; `--ai-review` describes whether human review occurred. Any of these flags adds the visible marker, but omitted trailers are not inferred. The CLI uses `AI-Review: false` for unreviewed commits.
+
+## Message convention
+
+## Format
+
+```text
+「 {type} 」{scope}: {description}
+
+{body}
+
+{breaking_change}
+{ai_metadata}
+{footer}
+```
+
+The type value includes the selected Gitmoji and bilingual label, for example:
+
+```text
+「 :sparkles: 新增 / feat 」(auth): add refresh token support
+```
+
+Use `()` around scope. Omit the scope when it does not add useful context.
+
+## Types
+
+Use one type by default. Multiple types are allowed for a personal project when the change genuinely combines concerns and splitting the commit would be impractical. When multiple types are used, separate them with `, ` and order them by the commit's primary purpose first.
+
+| Gitmoji | Type | Use for |
+| --- | --- | --- |
+| `:sparkles:` | `feat` | New user-facing or developer-facing functionality |
+| `:bug:` | `fix` | Bug fixes |
+| `:pencil2:` | `change` | Project-specific changes that do not fit the other types, including configuration or non-code changes |
+| `:recycle:` | `refactor` | Structural code changes with no feature or bug-fix intent |
+| `:rocket:` | `build` | Build system, packaging, compilation, or dependency changes |
+| `:construction_worker:` | `ci` | Continuous integration and delivery workflows |
+| `:art:` | `chore` | Maintenance and repository housekeeping |
+| `:pencil:` | `docs` | Documentation changes |
+| `:white_check_mark:` | `test` | Adding or changing tests |
+| `:zap:` | `perf` | Performance improvements |
+| `:lipstick:` | `style` | Changes that do not alter program meaning, such as formatting |
+| `:rewind:` | `revert` | Reverting an earlier commit |
+| `:tada:` | `init` | Project or environment initialization |
+
+Do not use `change` as a vague substitute for `refactor`, `fix`, or `feat`. Prefer the more specific type when one applies.
+
+## Subject
+
+- Describe the result of the change, not the editing process.
+- Use a concise imperative description.
+- Do not end the description with a period.
+- Preserve the semantic structure of `type(scope): description` inside the decorated header. Default Conventional Commits parsers may require customization.
+- Keep the project's Gitmoji and bilingual display text in the decorated type field.
+
+The body is optional and is chosen by the model according to the change. When present, explain motivation, impact, constraints, or migration details instead of mechanically repeating the subject.
+
+Use the language of the repository's previous commit messages. If there are no previous commits or no clear language pattern, use Chinese by default.
+
+## Breaking changes
+
+Use the project's visible marker and add a separate standard footer containing migration information:
+
+```text
+「 :sparkles: 新增 / feat 」(api): rename userId to id
+
+「 :boom: 破坏性更改 / BREAKING CHANGE 」
+BREAKING CHANGE: clients must replace `userId` with `id`.
+```
+
+The `「 :boom: ... 」` line is the project's visual marker. The `BREAKING CHANGE:` line is the machine-readable explanation and is required. Explain what breaks and how users should migrate. The decorated marker remains required; this CLI does not add a `!` subject marker.
+
+## AI metadata
+
+Add AI metadata only when the commit is wholly or mostly generated by AI and has not received meaningful human review. Keep the project's visible marker and add standard trailers:
+
+```text
+「[AI] Agentic Coding 产物 / Agentic Coding Product」
+本次提交由 OpenCode 执行 / This commit was made by OpenCode.
+AI-Generated: true
+AI-Review: false
+```
+
+Replace `OpenCode` with the actual Agent Harness Environment. The second line must be immediately after the `「[AI] ...」` marker when the agent itself performs the commit. Do not claim `AI-Review: false` after meaningful human review; omit the AI marker and trailers then.
+
+## Footer
+
+Use only footer information useful for this personal project. Always keep the decorated breaking-change marker and its `BREAKING CHANGE:` explanation when applicable. Use AI trailers only under the conditions above. Do not add arbitrary issue, reviewer, or co-author trailers just to fill the template.
+
+## Generation checklist
+
+1. Inspect the actual change and identify its primary intent.
+2. Choose the most specific type or the smallest justified set of types.
+3. Add a scope only when it identifies a meaningful subsystem, package, or area.
+4. Write a concise imperative subject.
+5. Add a body only when it improves understanding of the change.
+6. Add both breaking-change lines and migration details for every breaking change.
+7. Add AI metadata only when its conditions are met; if the agent itself performs the commit, include the actual harness environment directly below the AI marker.
