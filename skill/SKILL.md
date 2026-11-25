@@ -1,45 +1,74 @@
 ---
 name: wy-git-commit
-description: 用户要求使用 wy-git-commit 提交时，选择参数并执行提交。
+description: 使用 wgc（wy-git-commit）执行格式化消息的 Git 提交。
 ---
 
-# wy-git-commit
+# wgc
 
-根据暂存区改动选择参数，沿用近期提交的语言；没有明确惯例时用中文。由 CLI 负责格式化和提交。
+wgc 是对 git commit 的格式化消息 wraper，执行 wgc 等价于执行 git commit。
+
+## 使用
 
 ```sh
-wy-git-commit --type TYPE --title "TITLE" [选项] [Git 提交参数]
+wgc --type TYPE --title "TITLE" [选项] [Git 提交参数]
 ```
+
+### 基本参数
 
 | 参数 | 用法 |
 | --- | --- |
-| `--type` | 必填。优先选一个最具体的类型；确需多选时，主类型在前，用逗号分隔或重复传参。 |
-| `--title` | 必填。用一句话描述改动结果，不加句号。 |
-| `--scope` | 有明确模块或子系统时填写，不带括号。 |
-| `--body` | 按需补充动机、影响或约束，不重复标题。 |
-| `--breaking` | 有不兼容变更时填写受影响对象和迁移方式。 |
-| `--harness` | 代理执行提交时，填写实际运行环境。 |
-| `--ai-generated true / false` | 是否主要由 AI 生成。 |
-| `--ai-review true / false` | 是否经过实质性人工审阅。 |
+| `--type TYPE` | 必填。传类型键。多个类型可用逗号分隔或重复传参，按传入顺序显示。 |
+| `--title TITLE` | 必填。单行标题。 |
+| `--scope SCOPE` | 单行作用域，不需括号。 |
+| `--body BODY` | 正文。 |
+| `--breaking TEXT` | 破坏性变更说明，不需 `BREAKING CHANGE:` 前缀。 |
+| `--wy-dry-run` | 只输出格式化后的提交信息。 |
 
-仅当改动主要由 AI 生成且未经实质性人工审阅时传 AI 参数。三项任传一项即添加 AI 标记，其余字段不会自动补齐。
+用 `--title` 和 `--body` 提供消息内容。其他 Git 提交参数可直接传入，例如 `--amend`。
 
-Git 参数可直接传入，`-m` / `--message` 除外。
+### TYPE
 
-## 类型
-
-| 类型 | 用途 |
+| 类型 | 相关 |
 | --- | --- |
 | `feat` | 新功能 |
-| `fix` | 缺陷修复 |
-| `change` | 无更具体类型的项目变更 |
-| `refactor` | 不改变功能的代码重构 |
+| `fix` | Bug 修复 |
+| `change` | 不属于其他类型的项目专属变更，包括配置或非代码变更 |
+| `refactor` | 重构 |
 | `build` | 构建、打包或依赖 |
 | `ci` | 持续集成与交付 |
-| `chore` | 日常维护 |
+| `chore` | 维护与仓库日常事务 |
 | `docs` | 文档 |
 | `test` | 测试 |
 | `perf` | 性能优化 |
 | `style` | 不改变行为的代码格式调整 |
 | `revert` | 撤销提交 |
 | `init` | 项目或环境初始化 |
+
+change 不应是 refactor、fix 或 feat 的模糊替代。当存在更具体的类型时，优先使用后者。
+
+### AI Meta
+
+| 参数 | 含义 |
+| --- | --- |
+| `--harness NAME` | 执行提交的 Agent 运行环境，只要由你（AI）执行提交就应当添加。 |
+| `--ai-generated true\|false` | 改动是否主要由 AI 生成，false 时建议省略。 |
+| `--ai-review true\|false` | 改动是否未经过实质性人工审阅，true 时建议省略。 |
+
+
+例如，使用 `wgc --type feat --title "Add new feature" --scope fe --body "This is a new feature." --harness DSH --ai-generated true --amend` 等价于
+
+```sh
+git commit -m "「 :sparkles: 新增 / feat 」(fe): Add new feature
+
+This is a new feature.
+
+「[AI] Agentic Coding 产物 / Agentic Coding Product」
+本次提交由 DSH 执行 / This commit was made by DSH.
+AI-Generated: true" --amend
+```
+
+## 建议规范
+
+* 提交语言与文案风格参考仓库历史提交，不存在或不明确时默认使用中文。
+* 默认使用一种类型，但当变更确实涉及多项关注点、且拆分提交并不现实时，允许且建议使用多类型。
+* title 使用简洁的祈使句描述变更结果，不以句号结尾。
