@@ -1,6 +1,6 @@
 ---
 name: wy-git-commit
-description: 使用 wgc（wy-git-commit）执行格式化消息的 Git 提交。
+description: 使用 wgc（wy-git-commit）执行格式化消息的 Git 提交。仅在 Woisol 的个人项目中使用，其它项目请遵循原仓库的提交规范。
 ---
 
 # wgc
